@@ -54,35 +54,10 @@ function createSnapshotManager(viewer, settings) {
         camera.orbitOffset = orbitOffset;
         camera.aspectRatio = width / height;
 
-        // Apply rotation based on index
-        const rotationAngle = index === 0 ? 0 : index === 1 ? 120 : 180;
-        rotateCameraAroundCenter(camera, rotationAngle);
-
-        return CaptureSnapshot(viewer, width, height, false, currentZoomLevel, panOffset, orbitOffset, camera);
+        return CaptureSnapshot(viewer, width, height, false, currentZoomLevel, panOffset, orbitOffset, camera, index);
     }
 
-    function rotateCameraAroundCenter(camera, angle) {
-        console.log(`Rotating camera by ${angle} degrees`);
-        const radians = angle * (Math.PI / 180);
-        const cosAngle = Math.cos(radians);
-        const sinAngle = Math.sin(radians);
 
-        const direction = {
-            x: camera.eye.x - camera.center.x,
-            y: camera.eye.y - camera.center.y,
-            z: camera.eye.z - camera.center.z
-        };
-
-        const rotatedDirection = {
-            x: cosAngle * direction.x - sinAngle * direction.z,
-            y: direction.y,
-            z: sinAngle * direction.x + cosAngle * direction.z
-        };
-
-        camera.eye.x = camera.center.x + rotatedDirection.x;
-        camera.eye.y = camera.center.y + rotatedDirection.y;
-        camera.eye.z = camera.center.z + rotatedDirection.z;
-    }
 
     function updatePreview(index) {
         if (index < 0 || index >= previewImages.length) {
@@ -173,13 +148,41 @@ function createSnapshotManager(viewer, settings) {
 }
 
 
-function CaptureSnapshot(viewer, width, height, isTransparent, zoomLevel, panOffset, orbitOffset, camera) {
+function CaptureSnapshot(viewer, width, height, isTransparent, zoomLevel, panOffset, orbitOffset, camera, index) {
+    
+    function rotateCameraAroundCenter(camera, angle) {
+        console.log(`Rotating camera by ${angle} degrees`);
+        const radians = angle * (Math.PI / 180);
+        const cosAngle = Math.cos(radians);
+        const sinAngle = Math.sin(radians);
+
+        const direction = {
+            x: camera.eye.x - camera.center.x,
+            y: camera.eye.y - camera.center.y,
+            z: camera.eye.z - camera.center.z
+        };
+
+        const rotatedDirection = {
+            x: cosAngle * direction.x - sinAngle * direction.z,
+            y: direction.y,
+            z: sinAngle * direction.x + cosAngle * direction.z
+        };
+
+        camera.eye.x = camera.center.x + rotatedDirection.x;
+        camera.eye.y = camera.center.y + rotatedDirection.y;
+        camera.eye.z = camera.center.z + rotatedDirection.z;
+    }
+
     // Store original camera state
     const originalCamera = {
         eye: { x: camera.eye.x, y: camera.eye.y, z: camera.eye.z },
         center: { x: camera.center.x, y: camera.center.y, z: camera.center.z },
         up: { x: camera.up.x, y: camera.up.y, z: camera.up.z }
     };
+
+    // Apply rotation
+    const rotationAngle = index === 0 ? 0 : index === 1 ? 120 : 180;
+    rotateCameraAroundCenter(camera, rotationAngle);
 
     // Apply zoom
     const direction = {
