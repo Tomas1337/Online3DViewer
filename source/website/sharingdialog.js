@@ -54,7 +54,34 @@ function createSnapshotManager(viewer, settings) {
         camera.orbitOffset = orbitOffset;
         camera.aspectRatio = width / height;
 
+        // Apply rotation based on index
+        const rotationAngle = index === 0 ? 0 : index === 1 ? 120 : 180;
+        rotateCameraAroundCenter(camera, rotationAngle);
+
         return CaptureSnapshot(viewer, width, height, false, currentZoomLevel, panOffset, orbitOffset, camera);
+    }
+
+    function rotateCameraAroundCenter(camera, angle) {
+        console.log(`Rotating camera by ${angle} degrees`);
+        const radians = angle * (Math.PI / 180);
+        const cosAngle = Math.cos(radians);
+        const sinAngle = Math.sin(radians);
+
+        const direction = {
+            x: camera.eye.x - camera.center.x,
+            y: camera.eye.y - camera.center.y,
+            z: camera.eye.z - camera.center.z
+        };
+
+        const rotatedDirection = {
+            x: cosAngle * direction.x - sinAngle * direction.z,
+            y: direction.y,
+            z: sinAngle * direction.x + cosAngle * direction.z
+        };
+
+        camera.eye.x = camera.center.x + rotatedDirection.x;
+        camera.eye.y = camera.center.y + rotatedDirection.y;
+        camera.eye.z = camera.center.z + rotatedDirection.z;
     }
 
     function updatePreview(index) {
@@ -144,6 +171,7 @@ function createSnapshotManager(viewer, settings) {
 
     return { initializePreviewImages, cleanup, captureSnapshot, updatePreview };
 }
+
 
 function CaptureSnapshot(viewer, width, height, isTransparent, zoomLevel, panOffset, orbitOffset, camera) {
     // Store original camera state
