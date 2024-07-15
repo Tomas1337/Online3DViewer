@@ -37,6 +37,35 @@ function createSnapshotManager(viewer, settings) {
         currentZoomLevel: CONFIG.INITIAL_ZOOM
     }));
     let previewImages = [];
+    let animationFrameId = null;
+    let pendingUpdates = new Set();
+
+
+    function queuePreviewUpdate(index) {
+        pendingUpdates.add(index);
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(updatePendingPreviews);
+        }
+    }
+    
+    function updatePendingPreviews() {
+        pendingUpdates.forEach((index) => {
+            if (index < 0 || index >= previewImages.length) {
+                console.error(`Invalid preview index: ${index}`);
+                return;
+            }
+    
+            const snapshotData = captureSnapshot(index);
+            if (snapshotData) {
+                previewImages[index].src = snapshotData;
+            } else {
+                console.error(`Failed to capture snapshot for index: ${index}`);
+            }
+        });
+    
+        pendingUpdates.clear();
+        animationFrameId = null;
+    }
 
     function captureSnapshot(index) {
         console.log(`Capturing snapshot for index: ${index}`);
@@ -107,8 +136,10 @@ function createSnapshotManager(viewer, settings) {
                     state.panOffset.y -= deltaY * CONFIG.PAN_RATIO;
                 }
 
-                updatePreview(index);
+                // updatePreview(index);
+                
                 state.startMousePosition = currentMousePosition;
+                queuePreviewUpdate(index);
                 break;
             case 'mousedown':
                 state.startMousePosition = { x: event.clientX, y: event.clientY };
